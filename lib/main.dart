@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/components/CustomSlider.dart';
 import 'package:flutter_application_1/components/PosesTable.dart';
 import 'package:flutter_application_1/components/StyledButton.dart';
+import 'package:flutter_application_1/services/ApiService.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,6 +50,37 @@ class _MyHomePageState extends State<MyHomePage> {
     },
     // Add more poses as needed
   ];
+  bool _isRunning = false;
+  int? _currentRunId;
+
+  void _setIsRunning(bool value) {
+    setState(() {
+      _isRunning = value;
+    });
+  }
+
+  Future<void> _handleRunButton() async {
+    try {
+      // Start new run
+      final motorValues = {
+        'motor_1': _motor1_angle,
+        'motor_2': _motor2_angle,
+        'motor_3': _motor3_angle,
+        'motor_4': _motor4_angle,
+        'motor_5': _motor5_angle,
+      };
+
+      final response = await ApiService.startRun(motorValues);
+      setState(() {
+        _isRunning = true;
+        _currentRunId = response['run_id'];
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    }
+  }
 
   void _setMotor1Angle(double angle) {
     setState(() {
@@ -182,7 +214,26 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                   isLoading: false,
                 ),
-                StyledButton(text: "Run", onPressed: () {}, isLoading: false),
+                StyledButton(
+                  text: "Run",
+                  onPressed: () {
+                    _setIsRunning(true);
+                    _handleRunButton()
+                        .then((value) {
+                          _setIsRunning(false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Run started successfully')),
+                          );
+                        })
+                        .catchError((error) {
+                          _setIsRunning(false);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: $error')),
+                          );
+                        });
+                  },
+                  isLoading: _isRunning,
+                ),
               ],
             ),
             SingleChildScrollView(
