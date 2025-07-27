@@ -1,0 +1,28 @@
+name: "Run Tests"
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+
+jobs:  
+  build:      
+    name: Run Tests
+    runs-on: macos-latest 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: 'stable'
+    
+      - name: Run Flutter Tests
+        run: |
+          flutter test --coverage
